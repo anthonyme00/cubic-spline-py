@@ -6,8 +6,6 @@
 #https://mathworld.wolfram.com/CubicSpline.html
 
 import math
-import numpy as np
-import matplotlib.pyplot as plot
 
 class Matrix:
     '''
