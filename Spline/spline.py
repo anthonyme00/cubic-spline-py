@@ -208,9 +208,7 @@ class CubicSpline:
         D = self.__dMat.getCol(0)
         i = math.floor(position)
         i %= self.size
-        #if(i == self.size-1):
-        #    i = self.size-2
-        t = position - i
+        t = (position % self.size) - i
         ai = y[i]
         bi = D[i]
         ci = 3*(y[(i+1)%self.size] - y[i]) - 2 * D[i] - D[(i+1)%self.size]

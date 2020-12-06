@@ -77,14 +77,18 @@ class MainView:
                     return
 
         if(len(valuesY) != len(valuesX) and self.is2D.get() == 1):
-            showwarning('Spline 2D harus memiliki jumlah titik yang sama!')
+            showwarning("Input invalid!","Spline 2D harus memiliki jumlah titik yang sama!")
             return
 
         resolution = self.resolutionString.get()
         try:
-            resolution = int(resolution)
+            resolution = int(resolution) + 1
         except ValueError:
             showwarning("Can't parse input", """Masukan resolusi berupa integer""")
+            return
+
+        if(resolution <= 2):
+            showwarning("Resolution not valid!", "Resolusi harus lebih dari 1")
             return
 
         valuesY = [float(i) for i in valuesY]
@@ -93,7 +97,7 @@ class MainView:
         nums = np.linspace(0, len(valuesY) - 1, num=resolution)
         if(self.isClosed.get() == 1):
             nums = np.linspace(0, len(valuesY), num=resolution)
-            nums = nums[:-1]
+            #nums = nums[:-1]
 
         points = np.arange(0, len(valuesY))
 
