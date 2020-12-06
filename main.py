@@ -15,14 +15,21 @@ class MainView:
         self.root.title("Spline Demo")
         
         self.valuesString = StringVar()
-        Label(self.root, text = "Masukan Value").grid(row=5, column=1, pady=10, sticky="e")
+        Label(self.root, text = "Masukan Value : ").grid(row=5, column=1, pady=10, sticky="e")
         valuesInput = Entry(self.root, textvariable=self.valuesString, width=50).grid(row=5,column=2, pady=10, columnspan=5, sticky="w")
-        self.valuesString.set("0, 3, 5.2, 1.3, 2.1, 3.5, 6.1, 1.3, 10.5, 12.1, 1.2, 0.5, 3.5, 5")
+        
+        #input awal
+        self.valuesString.set("0, 3, 3, 2, 5")
 
         self.resolutionString = StringVar()
-        Label(self.root, text = "Masukan Resolusi").grid(row=6, column=1, pady=10, sticky="e")
+        Label(self.root, text = "Masukan Resolusi : ").grid(row=6, column=1, pady=10, sticky="e")
         resolutionInput = Entry(self.root, textvariable=self.resolutionString, width=10).grid(row=6,column=2, pady=10, columnspan=5, sticky="w")
         self.resolutionString.set("1000")
+
+        self.isClosed = IntVar()
+        Checkbutton(self.root, variable=self.isClosed).grid(row=6, column=4, sticky="w")
+        Label(self.root, text = "Spline tertutup : ").grid(row=6, column=3, sticky="e")
+
 
         submitValue = Button(self.root, command=self.update, text="Submit").grid(row=7, column=2, pady=10)
 
@@ -55,11 +62,14 @@ class MainView:
         values = [float(i) for i in values]
 
         nums = np.linspace(0, len(values) - 1, num=resolution)
+        if(self.isClosed.get() == 1):
+            nums = np.linspace(0, len(values), num=resolution)
+            nums = nums[:-1]
+
         points = np.arange(0, len(values))
 
-        
         interpolated = []
-        spline = CubicSpline(values, False)
+        spline = CubicSpline(values, self.isClosed.get() == 1)
         for i in nums:
             interpolated.append(spline.getPoint(i))
 

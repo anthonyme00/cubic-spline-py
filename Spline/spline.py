@@ -180,13 +180,13 @@ class CubicSpline:
         #Menghitung isi dari matriks Y
         for i in range(self.size):
             if not (self.isClosed):
-                yEq.values[i][0] = 3 * (self.__points[min(i+1, self.size-1)] * self.__points[min((self.size-2)-i, 0)])
+                yEq.values[i][0] = 3 * (self.__points[min(i+1, self.size-1)] - self.__points[max(i-1, 0)])
             else:
-                yEq.values[i][0] = 3 * (self.__points[(i+1) % self.size] * self.__points[((self.size-2)-i) % self.size])
+                yEq.values[i][0] = 3 * (self.__points[(i+1) % self.size] - self.__points[(i-1) % self.size])
         #Menghitung isi dari matriks D
         #Matriks ini merupakan hasil perkalian dari
         #(invers matrix tridiagonal NxN)*(matriks Y)
-        __dMat = TridiagonalMatrix(self.size, self.isClosed).inverse() * yEq
+        self.__dMat = TridiagonalMatrix(self.size, self.isClosed).inverse() * yEq
 
     """
     Gunakan method ini untuk menciptakan ulang spline
@@ -194,6 +194,8 @@ class CubicSpline:
     def updatePoints(self, points:list, closed: bool = False):
         self.isClosed = closed
         self.__points = points
+        self.size = len(points)
+        self.__dMat = Matrix(1, self.size)
         self.__recalculate__()
 
     """
@@ -201,16 +203,17 @@ class CubicSpline:
     ini adalah fungsi Yi(t) pada spline
     """
     def getPoint(self, position: float):
-        assert(position >= 0 and position <= self.size-1), 'posisi diluar batasan'
+        assert(position >= 0 and position <= self.size), 'posisi diluar batasan'
         y = self.__points
         D = self.__dMat.getCol(0)
         i = math.floor(position)
-        if(i == self.size-1):
-            i = self.size-2
+        i %= self.size
+        #if(i == self.size-1):
+        #    i = self.size-2
         t = position - i
         ai = y[i]
         bi = D[i]
-        ci = 3*(y[i+1] - y[i]) - 2 * D[i] - D[i+1]
-        di = 2*(y[i]-y[i+1]) + D[i] + D[i+1]
+        ci = 3*(y[(i+1)%self.size] - y[i]) - 2 * D[i] - D[(i+1)%self.size]
+        di = 2*(y[i]-y[(i+1)%self.size]) + D[i] + D[(i+1)%self.size]
 
         return ai + bi * t + ci * (t**2) + di * (t**3)
