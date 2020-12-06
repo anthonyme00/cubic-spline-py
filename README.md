@@ -10,7 +10,7 @@ Menggunakan dependensi:
 - matplotlib
 - tkinter
 
-![gui](/Doc/gui.png "gui")
+![gui](/Doc/images/gui.png "gui")
 
 ### Cara Menjalankan
 ---
