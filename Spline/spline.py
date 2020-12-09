@@ -26,33 +26,29 @@ class Matrix:
         #Menggabungkan matrix dengan matrix identitas untuk menghitung matriks inverse
         mirrorMatrix = self.appendMatrix(IdentityMatrix(self.col))
         
-        #Melakukan pendiagonalisasian pada matriks
-        #Dimulai dengan mengenolkan segitiga bawah
-        for x in range(self.col):
-            yTest = x
-            maxMat = mirrorMatrix.values[yTest][x]
-            indexMax = yTest
-            for y in range(x, self.row):
-                if mirrorMatrix.values[y][x] > maxMat:
-                    maxMat = mirrorMatrix.values[y][x]
-                    indexMax = y
-            assert (maxMat != 0), 'inversi matriks tidak dapat dicari'
-            if (indexMax != yTest):
-                mirrorMatrix.values[yTest], mirrorMatrix.values[indexMax] = mirrorMatrix.values[indexMax], mirrorMatrix.values[y]
-            multiplier = 1/mirrorMatrix.values[indexMax][x]
-            mirrorMatrix.values[indexMax] = [i * multiplier for i in mirrorMatrix.values[indexMax]]
-            for y in range(indexMax+1, self.row):
-                if(mirrorMatrix.values[y][x] != 0):
-                    multiplier = mirrorMatrix.values[y][x]
-                    for i in range(x, mirrorMatrix.col):
-                        mirrorMatrix.values[y][i] -= mirrorMatrix.values[indexMax][i] * multiplier
-        
-        #Pengenolan segitiga atas
-        for x in reversed(range(self.col)):
-            for y in reversed(range(x)):
-                multiplier = mirrorMatrix.values[y][x]
-                for i in range(x, mirrorMatrix.col):
-                    mirrorMatrix.values[y][i] -= mirrorMatrix.values[x][i] * multiplier
+        #Mencari inversi dengan matriks identitas
+        for i in range(mirrorMatrix.row):
+            max = 0
+            max_index = -1
+            for row in range(i, mirrorMatrix.row):
+                if (mirrorMatrix.values[row][i]) > max or max_index == -1:
+                    max = mirrorMatrix.values[row][i]
+                    max_index = row
+
+            assert (max != 0), 'Tidak dapat mencari inversi'
+
+            if(max_index != i):
+                mirrorMatrix.values[i], mirrorMatrix.values[max_index] = mirrorMatrix.values[max_index], mirrorMatrix.values[i]
+
+            multiplier = 1/max
+            mirrorMatrix.values[i] = [el*multiplier for el in mirrorMatrix.values[i]]
+
+            for j in range(mirrorMatrix.row):
+                if j == i:
+                    continue
+                else:
+                    multiplier = mirrorMatrix.values[j][i]
+                    mirrorMatrix.values[j] = [mirrorMatrix.values[j][el]-(multiplier*mirrorMatrix.values[i][el]) for el in range(mirrorMatrix.col)]
 
         #Mengambil matrix sebelah kanan, yang merupakan inverse dari matriks awal
         retMatrix = Matrix(self.col, self.row)
@@ -159,7 +155,120 @@ class TridiagonalMatrix(Matrix):
             self.values[0][0] = 2
             self.values[size-1][size-1] = 2
 
-class CubicSpline:
+class Spline:
+    def __init__(self, points: list):
+        self.__points = points
+
+    def getPoint(self, position: float):
+        return 0.0
+
+class LinearSpline(Spline):
+    """
+    Kelas untuk membuat spline linear
+    input berupa list berisi nilai float.
+    ex: LinearSpline([5, 2, 3, 1, 4])
+    """
+    def __init__(self, points:list):
+        self.__points = points
+        self.size = len(points)
+
+    def getPoint(self, position: float):
+        assert(position >= 0 and position <= self.size), 'posisi diluar batasan'
+        fi = self.__points
+        x = position - math.floor(position)
+
+        i = math.floor(position) % self.size
+        i_1 = (i+1) % self.size
+
+        return fi[i] + (fi[i_1]-fi[i])*x    
+
+class QuadraticSpline(Spline):
+    """
+    Kelas untuk membuat spline Quadratic
+    input berupa list berisi nilai float.
+    ex: QuadraticSpline([5, 2, 3, 1, 4])
+    """
+    def __init__(self, points:list, closed: bool = False):
+        if closed:
+            self.__points = points + [points[0]]
+            self.size = len(self.__points)
+        else:
+            self.__points = points
+            self.size = len(points)
+        self.__eqMat = []
+
+        self.isClosed = closed
+        self.__calculate()
+
+    def __calculate(self):
+        n = self.size-1
+        funcMat = Matrix(n*3-1, n*3-1)
+        resultMat = Matrix(1, n*3-1)
+
+        points = self.__points
+
+        mat_i = 0
+        res_i = 0
+
+        def insertResult(res: float):
+            nonlocal resultMat
+            nonlocal res_i
+
+            resultMat.values[res_i][0] = res
+            res_i += 1
+
+        def insertEq1(i: int, a: float, b: float, c: float):
+            nonlocal mat_i
+            nonlocal funcMat
+            
+            if(i > 1):
+                funcMat.values[mat_i][(i-1)*3 - 1] = a
+                
+            funcMat.values[mat_i][(i-1)*3] = b
+            funcMat.values[mat_i][(i-1)*3 + 1] = c
+
+            mat_i += 1
+
+        def insertEq2(i: int, ai: float, bi: float, ai_1: float, bi_1: float):
+            nonlocal mat_i
+            nonlocal funcMat
+            
+            if(i > 2):
+                funcMat.values[mat_i][(i-2)*3 - 1] = 2*ai
+            funcMat.values[mat_i][(i-1)*3 - 1] = -2*ai_1
+            funcMat.values[mat_i][(i-2)*3] = bi
+            funcMat.values[mat_i][(i-1)*3] = -bi_1
+
+            mat_i += 1
+
+        for i in range(2,n+1):
+            insertEq1(i-1,(i-1)**2, (i-1), 1)
+            insertResult(points[i-1])
+            insertEq1(i,(i-1)**2, (i-1), 1)
+            insertResult(points[i-1])
+        
+        insertEq1(1, 0, 0, 1)
+        insertResult(points[0])
+
+        insertEq1(n, n**2, n, 1)
+        insertResult(points[n])
+
+        for i in range(2,n+1):
+            insertEq2(i, i, 1, i-1, 1)
+            insertResult(0)
+
+        self.__eqMat = [0] + (funcMat.inverse() * resultMat).getCol(0)
+
+    def getPoint(self, position: float):
+        assert(position >= 0 and position <= self.size), 'posisi diluar batasan'
+
+        eqs = self.__eqMat
+        
+        pos_index = min(math.floor(position), round((len(eqs)/3)-1))
+
+        return eqs[pos_index*3]*(position**2) + eqs[pos_index*3+1]*position + eqs[pos_index*3+2]
+
+class CubicSpline(Spline):
     """
     Kelas untuk membuat spline cubic
     input berupa list berisi nilai float.
@@ -170,12 +279,12 @@ class CubicSpline:
         self.size = len(points)
         self.__dMat = Matrix(1, self.size)
         self.isClosed = closed
-        self.__recalculate__()
+        self.__calculate()
     
     """
     Menciptakan matriks D dengan menggunakan matriks tridiagonal
     """
-    def __recalculate__(self):
+    def __calculate(self):
         yEq = Matrix(1, self.size)
         #Menghitung isi dari matriks Y
         for i in range(self.size):
@@ -187,16 +296,6 @@ class CubicSpline:
         #Matriks ini merupakan hasil perkalian dari
         #(invers matrix tridiagonal NxN)*(matriks Y)
         self.__dMat = TridiagonalMatrix(self.size, self.isClosed).inverse() * yEq
-
-    """
-    Gunakan method ini untuk menciptakan ulang spline
-    """
-    def updatePoints(self, points:list, closed: bool = False):
-        self.isClosed = closed
-        self.__points = points
-        self.size = len(points)
-        self.__dMat = Matrix(1, self.size)
-        self.__recalculate__()
 
     """
     Mengambil sampel titik pada spline

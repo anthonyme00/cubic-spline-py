@@ -6,12 +6,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.figure as fig
 import numpy as np
 
-from Spline.spline import CubicSpline
+from Spline.spline import CubicSpline, QuadraticSpline, LinearSpline
 
 class MainView:
     def __init__(self):
         self.root = Tk()
-        self.root.geometry("500x600")
+        self.root.geometry("500x650")
         self.root.title("Spline Demo")
         
         self.valuesStringY = StringVar()
@@ -24,27 +24,33 @@ class MainView:
         self.__xEntry.grid(row=5,column=2, pady=10, columnspan=5, sticky="w")
 
         #input awal
-        self.valuesStringY.set("0, 3, 3, 2, 5")
-        self.valuesStringX.set("3, 4, 2, 1, 0")
+        self.valuesStringY.set("1, 3, 1")
+        self.valuesStringX.set("1, 3, 3")
 
         self.resolutionString = StringVar()
         Label(self.root, text = "Masukan Resolusi : ").grid(row=7, column=1, pady=10, sticky="e")
         resolutionInput = Entry(self.root, textvariable=self.resolutionString, width=10).grid(row=7,column=2, pady=10, columnspan=5, sticky="w")
         self.resolutionString.set("1000")
 
+        Label(self.root, text = "Tipe Spline : ").grid(row=8, column = 1)
+        self.tipeSpline = IntVar()
+        Radiobutton(self.root, text = "Linear", value=0, variable=self.tipeSpline).grid(row=8,column=2, sticky="w")
+        Radiobutton(self.root, text = "Quadratic", value=1, variable=self.tipeSpline).grid(row=8,column=3, sticky="w")
+        Radiobutton(self.root, text = "Cubic", value=2, variable=self.tipeSpline).grid(row=9,column=2, sticky="w")
+
         self.isClosed = IntVar()
         Checkbutton(self.root, variable=self.isClosed).grid(row=7, column=4, sticky="w")
-        Label(self.root, text = "Spline tertutup : ").grid(row=7, column=3, sticky="e")
+        Label(self.root, text = "Closed : ").grid(row=7, column=3, sticky="e")
 
         def set2D():
             self.__xEntry["state"] = DISABLED if self.is2D.get() != 1 else NORMAL
 
         self.is2D = IntVar()
         Checkbutton(self.root, variable=self.is2D, command=set2D).grid(row=8, column=4, sticky="w")
-        Label(self.root, text = "Spline 2D : ").grid(row=8, column=3, sticky="e")
+        Label(self.root, text = "2D : ").grid(row=8, column=3, sticky="e")
         self.is2D.set(1)
 
-        submitValue = Button(self.root, command=self.update, text="Submit").grid(row=9, column=2, pady=10)
+        submitValue = Button(self.root, command=self.update, text="Submit").grid(row=9, column=4, pady=10)
 
         self.figure = fig.Figure(figsize=(5, 4), dpi=100)
 
@@ -80,6 +86,12 @@ class MainView:
             showwarning("Input invalid!","Spline 2D harus memiliki jumlah titik yang sama!")
             return
 
+        if(len(valuesY) < 2):
+            showwarning("Panjang angka yang diinterpolasi harus lebih dari 1!")
+
+        if(len(valuesY) < 2 and self.is2D.get() == 1):
+            showwarning("Panjang angka yang diinterpolasi harus lebih dari 1!")
+
         resolution = self.resolutionString.get()
         try:
             resolution = int(resolution) + 1
@@ -103,8 +115,16 @@ class MainView:
 
         interpolatedY = []
         interpolatedX = []
-        splineY = CubicSpline(valuesY, self.isClosed.get() == 1)
-        splineX = CubicSpline(valuesX, self.isClosed.get() == 1)
+        if(self.tipeSpline.get() == 0):
+            splineY = LinearSpline(valuesY)
+            splineX = LinearSpline(valuesX)
+        elif(self.tipeSpline.get() == 1):
+            splineY = QuadraticSpline(valuesY, self.isClosed.get() == 1)
+            splineX = QuadraticSpline(valuesX, self.isClosed.get() == 1)
+        else:
+            splineY = CubicSpline(valuesY, self.isClosed.get() == 1)
+            splineX = CubicSpline(valuesX, self.isClosed.get() == 1)
+
         for i in nums:
             interpolatedY.append(splineY.getPoint(i))
             if(self.is2D.get() == 1):
