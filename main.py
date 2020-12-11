@@ -14,14 +14,14 @@ class MainView:
         self.root.geometry("500x650")
         self.root.title("Spline Demo")
         
-        self.valuesStringY = StringVar()
-        Label(self.root, text = "Masukan Value Y: ").grid(row=6, column=1, pady=10, sticky="e")
-        Entry(self.root, textvariable=self.valuesStringY, width=50).grid(row=6,column=2, pady=10, columnspan=5, sticky="w")
-        
         self.valuesStringX = StringVar()
         Label(self.root, text = "Masukan Value X: ").grid(row=5, column=1, pady=10, sticky="e")
         self.__xEntry = Entry(self.root, textvariable=self.valuesStringX, width=50)
         self.__xEntry.grid(row=5,column=2, pady=10, columnspan=5, sticky="w")
+
+        self.valuesStringY = StringVar()
+        Label(self.root, text = "Masukan Value Y: ").grid(row=6, column=1, pady=10, sticky="e")
+        Entry(self.root, textvariable=self.valuesStringY, width=50).grid(row=6,column=2, pady=10, columnspan=5, sticky="w")
 
         #input awal
         self.valuesStringY.set("1, 3, 1")
@@ -87,10 +87,10 @@ class MainView:
             return
 
         if(len(valuesY) < 2):
-            showwarning("Panjang angka yang diinterpolasi harus lebih dari 1!")
+            showwarning("Input Error!","Panjang angka yang diinterpolasi harus lebih dari 1!")
 
-        if(len(valuesY) < 2 and self.is2D.get() == 1):
-            showwarning("Panjang angka yang diinterpolasi harus lebih dari 1!")
+        if(len(valuesX) < 2 and self.is2D.get() == 1):
+            showwarning("Input Error!","Panjang angka yang diinterpolasi harus lebih dari 1!")
 
         resolution = self.resolutionString.get()
         try:
