@@ -88,9 +88,11 @@ class MainView:
 
         if(len(valuesY) < 2):
             showwarning("Input Error!","Panjang angka yang diinterpolasi harus lebih dari 1!")
+            return
 
         if(len(valuesX) < 2 and self.is2D.get() == 1):
             showwarning("Input Error!","Panjang angka yang diinterpolasi harus lebih dari 1!")
+            return
 
         resolution = self.resolutionString.get()
         try:
