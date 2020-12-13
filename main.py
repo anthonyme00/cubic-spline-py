@@ -16,7 +16,7 @@ class MainView:
         
         self.valuesStringX = StringVar()
         Label(self.root, text = "Masukan Value X: ").grid(row=5, column=1, pady=10, sticky="e")
-        self.__xEntry = Entry(self.root, textvariable=self.valuesStringX, width=50)
+        self.__xEntry = Entry(self.root, textvariable=self.valuesStringX, width=50, state=DISABLED)
         self.__xEntry.grid(row=5,column=2, pady=10, columnspan=5, sticky="w")
 
         self.valuesStringY = StringVar()
@@ -27,30 +27,38 @@ class MainView:
         self.valuesStringY.set("1, 3, 1")
         self.valuesStringX.set("1, 3, 3")
 
+        self.xString = StringVar()
+        Label(self.root, text = "Masukan x dicari : ").grid(row=7, column=1, pady=10, sticky="e")
+        self.__xInput = Entry(self.root, textvariable=self.xString, width=10)
+        self.__xInput.grid(row=7,column=2, pady=10, columnspan=5, sticky="w")
+        self.xString.set("0.5")
+
         self.resolutionString = StringVar()
-        Label(self.root, text = "Masukan Resolusi : ").grid(row=7, column=1, pady=10, sticky="e")
-        resolutionInput = Entry(self.root, textvariable=self.resolutionString, width=10).grid(row=7,column=2, pady=10, columnspan=5, sticky="w")
+        Label(self.root, text = "Masukan Resolusi : ").grid(row=8, column=1, pady=10, sticky="e")
+        resolutionInput = Entry(self.root, textvariable=self.resolutionString, width=10).grid(row=8,column=2, pady=10, columnspan=5, sticky="w")
         self.resolutionString.set("1000")
 
-        Label(self.root, text = "Tipe Spline : ").grid(row=8, column = 1)
+        Label(self.root, text = "Tipe Spline : ").grid(row=9, column = 1, sticky="e")
         self.tipeSpline = IntVar()
-        Radiobutton(self.root, text = "Linear", value=0, variable=self.tipeSpline).grid(row=8,column=2, sticky="w")
-        Radiobutton(self.root, text = "Quadratic", value=1, variable=self.tipeSpline).grid(row=8,column=3, sticky="w")
-        Radiobutton(self.root, text = "Cubic", value=2, variable=self.tipeSpline).grid(row=9,column=2, sticky="w")
+        Radiobutton(self.root, text = "Linear", value=0, variable=self.tipeSpline).grid(row=9,column=2, sticky="w")
+        Radiobutton(self.root, text = "Quadratic", value=1, variable=self.tipeSpline).grid(row=9,column=3, sticky="w")
+        Radiobutton(self.root, text = "Cubic", value=2, variable=self.tipeSpline).grid(row=10,column=2, sticky="w")
+        self.tipeSpline.set(2)
 
         self.isClosed = IntVar()
-        Checkbutton(self.root, variable=self.isClosed).grid(row=7, column=4, sticky="w")
-        Label(self.root, text = "Closed : ").grid(row=7, column=3, sticky="e")
+        Checkbutton(self.root, variable=self.isClosed).grid(row=8, column=4, sticky="w")
+        Label(self.root, text = "Closed : ").grid(row=8, column=3, sticky="e")
 
         def set2D():
             self.__xEntry["state"] = DISABLED if self.is2D.get() != 1 else NORMAL
+            self.__xInput["state"] = DISABLED if self.is2D.get() != 0 else NORMAL
 
         self.is2D = IntVar()
-        Checkbutton(self.root, variable=self.is2D, command=set2D).grid(row=8, column=4, sticky="w")
-        Label(self.root, text = "2D : ").grid(row=8, column=3, sticky="e")
-        self.is2D.set(1)
+        Checkbutton(self.root, variable=self.is2D, command=set2D).grid(row=9, column=4, sticky="w")
+        Label(self.root, text = "2D : ").grid(row=9, column=3, sticky="e")
+        self.is2D.set(0)
 
-        submitValue = Button(self.root, command=self.update, text="Submit").grid(row=9, column=4, pady=10)
+        submitValue = Button(self.root, command=self.update, text="Submit").grid(row=10, column=4, pady=10)
 
         self.figure = fig.Figure(figsize=(5, 4), dpi=100)
 
@@ -111,7 +119,6 @@ class MainView:
         nums = np.linspace(0, len(valuesY) - 1, num=resolution)
         if(self.isClosed.get() == 1):
             nums = np.linspace(0, len(valuesY), num=resolution)
-            #nums = nums[:-1]
 
         points = np.arange(0, len(valuesY))
 
@@ -135,10 +142,23 @@ class MainView:
         self.plt.clear()
         self.plt.plot(interpolatedX if self.is2D.get() == 1 else nums, interpolatedY)
         self.plt.scatter(valuesX if self.is2D.get() == 1 else points, valuesY, c="orange")
+
+        if(self.is2D.get() == 0):
+            try:
+                x = float(self.xString.get())
+
+                if(x <= nums[-1]):
+                    self.plt.scatter([x], [splineY.getPoint(x)], c="red")
+                    self.plt.text(x, splineY.getPoint(x), '  f({})={}'.format(x, round(splineY.getPoint(x), 6)))
+                else:
+                    showwarning("X out of bounds", "Input titik x dibawah panjang spline")
+
+            except ValueError:
+                showwarning("Can't parse x", "Input titik x dengan benar")
+
         old = self.canvas.get_tk_widget()
         self.canvas = FigureCanvasTkAgg(self.figure, self.root)
         self.canvas.get_tk_widget().grid(row=1,column=1,rowspan=4,columnspan=4)
         old.destroy()
 
 app = MainView()
-        
